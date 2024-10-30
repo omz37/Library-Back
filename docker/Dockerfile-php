@@ -1,0 +1,24 @@
+FROM php:8.2-fpm
+ARG COMPOSER_VERSION=2.5.5
+ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
+
+RUN chmod uga+x /usr/local/bin/install-php-extensions && sync && \
+    install-php-extensions xdebug pdo_pgsql soap zip apcu intl
+
+# Installation de Git pour Composer qui en a besoin pour certaines commandes
+RUN apt-get update && apt-get -y install git
+
+RUN apt install -y zip unzip git net-tools ghostscript
+
+RUN curl -sS https://getcomposer.org/installer | php -- --version=${COMPOSER_VERSION} --install-dir=/usr/local/bin --filename=composer
+
+RUN { \
+        echo 'upload_max_filesize = 100M'; \
+        echo 'post_max_size = 100M'; \
+	} > /usr/local/etc/php/conf.d/upload.ini
+
+# Overide entry point in order to get host.docker.internal resolution on linux
+COPY docker/docker-php-entrypoint.sh /usr/local/bin/docker-php-entrypoint
+
+ENTRYPOINT ["docker-php-entrypoint"]
+CMD ["php-fpm", "-R"]

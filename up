@@ -1,0 +1,2 @@
+#!/bin/sh
+DUID=$(id -u) DGID=$(id -g) docker-compose --compatibility up -d --build
